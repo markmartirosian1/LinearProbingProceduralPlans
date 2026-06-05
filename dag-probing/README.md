@@ -16,7 +16,7 @@ The project investigates whether procedural ordering knowledge is linearly encod
 .
 ├── notebooks/
 │   ├── 02_mode2_probe2_v2.ipynb       # Full 4-system sweep: Sys1–4 × all prompts × PS + CC
-│   ├── 02_mode2_probe2_v2.ipynb          # Binary Probe 2 + LLM baselines (primary Mode 2 eval)
+│                                      # Binary Probe 2 + LLM baselines (primary Mode 2 eval)
 │   ├── 03_validation_notebook.ipynb               # Probe training, Mode 1 test set, permutation tests
 │   └── 04_enrichment_scaling.ipynb       # Deletion sweep + spurious insertion scaling experiment
 │
