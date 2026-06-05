@@ -16,9 +16,9 @@ The project investigates whether procedural ordering knowledge is linearly encod
 .
 ├── notebooks/
 │   ├── 02_mode2_probe2_v2.ipynb       # Full 4-system sweep: Sys1–4 × all prompts × PS + CC
-│                                      # Binary Probe 2 + LLM baselines (primary Mode 2 eval)
-│   ├── 03_validation_notebook.ipynb               # Probe training, Mode 1 test set, permutation tests
-│   └── 04_enrichment_scaling.ipynb       # Deletion sweep + spurious insertion scaling experiment
+│   │                                  # Binary Probe 2 + LLM baselines (primary Mode 2 eval)
+│   ├── 03_validation_notebook.ipynb   # Probe training, Mode 1 test set, permutation tests
+│   └── 04_enrichment_scaling.ipynb    # Deletion sweep + spurious insertion scaling experiment
 │
 ├── data/
 │   ├── train/
@@ -38,31 +38,30 @@ The project investigates whether procedural ordering knowledge is linearly encod
 │   │   ├── mode1_synthetic_val.csv       # Threshold sweep — synthetic validation set
 │   │   ├── mode1_eval_diagnostics.csv    # Per-pair scores, pred_class, calibration
 │   │   ├── mode1_antisymmetry.csv        # Directional confidence analysis
-│   │   └── mode1_balanced_sweep.csv      # Balanced threshold sweep
-        ├── permutation_test_mode1.png        # Mode 1: tp1 + tp4 permutation panels
-│       ├── probe1_calibration.png            # Reliability diagram + directional confidence
+│   │   ├── mode1_balanced_sweep.csv      # Balanced threshold sweep
+│   │   ├── permutation_test_mode1.png    # Mode 1: tp1 + tp4 permutation panels
+│   │   └── probe1_calibration.png        # Reliability diagram + directional confidence
 │   ├── mode2/
-│   │   ├── mode2_probe2v2_sweep.csv      # Binary Probe 2: corpus/enrichable F1, LLM 
-baselines 
-        ├── permutation_test.png          # Mode 2 permutation test
+│   │   ├── mode2_probe2v2_sweep.csv      # Binary Probe 2: corpus/enrichable F1, LLM baselines
+│   │   └── permutation_test.png          # Mode 2 permutation test
 │   ├── enrichment/
 │   │   ├── enrichment_mode1.csv          # Mode 1 deletion sweep (20/40/60%)
 │   │   ├── enrichment_mode2.csv          # Mode 2a/2b spurious insertion (n=1/2/3)
 │   │   ├── combined_m1_probe.csv         # Combined experiment — Mode 1 probe
 │   │   ├── combined_m1_llm.csv           # Combined experiment — Mode 1 LLM baseline
 │   │   ├── combined_m2_probe.csv         # Combined experiment — Mode 2 probe
-│   │   └── combined_m2_llm.csv          # Combined experiment — Mode 2 LLM low-confidence
-│       ├── mode1_scaling.png                 # F1 vs deletion rate, precision/recall ]
-│       ├── mode2_scaling.png                # Mode 2a/2b F1 vs spurious level
+│   │   ├── combined_m2_llm.csv           # Combined experiment — Mode 2 LLM low-confidence
+│   │   ├── mode1_scaling.png             # F1 vs deletion rate, precision/recall
+│   │   └── mode2_scaling.png             # Mode 2a/2b F1 vs spurious level
 │   └── permutation/
 │       ├── permutation_aucs_mode2.csv    # 100 shuffled-label CV AUCs — Probe 2
 │       ├── permutation_aucs_mode1_tp1_ordering.csv
 │       └── permutation_aucs_mode1_tp4_flexibility.csv
 │
-│
 ├── docs/
-│   └── results.md              # Diagnostic guide: all results, validity analysis, next steps
-│   └── FILES_README.md                  # A guide on every single notebook and data file. 
+│   ├── results.md              # Diagnostic guide: all results, validity analysis, next steps
+│   └── FILES_README.md         # A guide on every single notebook and data file.
+│
 ├── .gitignore
 └── README.md
 ```
