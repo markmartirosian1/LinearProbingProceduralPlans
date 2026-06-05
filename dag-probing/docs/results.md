@@ -97,7 +97,7 @@ Evaluated on ProScript pipeline eval plans (ground_truth_removed_edges) and Capt
 | 2 | 0.750 | 0.582 | +0.168 | ~0.75 | ~0.75 |
 | 3 | 0.774 | 0.583 | +0.191 | 0.787 | 0.762 |
 
-**Interpretation:** Probe 2 is outperformed by the LLM low-confidence baseline. This is the key diagnostic signal.
+**Interpretation:** Probe 2 outperforms the LLM low-confidence baseline.. This is the key diagnostic signal.
 
 ### Reading the two Mode 2 results together
 

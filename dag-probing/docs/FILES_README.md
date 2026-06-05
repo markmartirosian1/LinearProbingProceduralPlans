@@ -6,7 +6,7 @@ Descriptions for the 8 files in this package.
 
 ## Notebooks
 
-### `mode2_probe2_v2__2_.ipynb`
+### `02_mode2_probe2_v2.ipynb`
 **Mode 2 — Binary Probe 2 with LLM baselines**
 
 Evaluates Mode 2 (spurious edge removal) using a binary logistic probe trained on Mistral-7B hidden states at layer 17. The probe distinguishes `confirmed_keep` edges (real ordering constraints, `label=1` from v2) from `synthetic_spurious_parallel` edges (same-depth incomparable pairs, used as flexible negatives).
@@ -21,7 +21,7 @@ Reports three F1 metrics per configuration: `macro_f1` (all plans), `enrichable_
 
 ---
 
-### `validation_notebook__1_.ipynb`
+### `03_validation_notebook.ipynb`
 **Mode 1 & Mode 2 — Validation suite with permutation tests**
 
 Three experiments in one notebook:
@@ -38,7 +38,7 @@ Three experiments in one notebook:
 
 ---
 
-### `enrichment_scaling_final.ipynb`
+### `04_enrichment_scaling.ipynb`
 **DAG enrichment scaling experiment**
 
 Tests both probe modes across a range of corruption levels on single-ordering and multi-ordering Group C plans. Three experiments:
