@@ -1,0 +1,22 @@
+# Large external datasets — download separately (see README)
+proScript_data/
+proScript_data*.zip
+captaincook_data/
+
+# Trained probe weights — regenerate via notebooks
+*.pkl
+
+# Colab/Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db

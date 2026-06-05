@@ -1,0 +1,42 @@
+goal,a,b,y_true,source
+attend a jazz performance,Find a local jazz club,Get ready and dressed for a night of jazz,1,annotation_green
+attend a jazz performance,Get ready and dressed for a night of jazz,Find a local jazz club,0,reverse_of_positive
+attend a jazz performance,Get directions to the club,Get ready and dressed for a night of jazz,0,flexible_pair
+attend a jazz performance,Get ready and dressed for a night of jazz,Get directions to the club,0,flexible_pair
+buy a new bicycle,Look at the bicycles that are offered.,Look and see what bicycle is the best.,1,annotation_green
+buy a new bicycle,Look and see what bicycle is the best.,Look at the bicycles that are offered.,0,reverse_of_positive
+buy postage stamps,look over the order to make sure everything's correct,go to check out and enter payment details,1,annotation_green
+buy postage stamps,go to check out and enter payment details,look over the order to make sure everything's correct,0,reverse_of_positive
+do something different,see which plans are interesting,write down those things,1,annotation_green
+do something different,write down those things,see which plans are interesting,0,reverse_of_positive
+earn some extra income,Look at classified ads,Find ads that fits skill set,1,annotation_green
+earn some extra income,Find ads that fits skill set,Look at classified ads,0,reverse_of_positive
+explore the city,Grab a map from the kiosk for a venue.,Have lunch at a restaurant.,1,annotation_green
+explore the city,Have lunch at a restaurant.,Grab a map from the kiosk for a venue.,0,reverse_of_positive
+go on a diet,Prepare a healthy meal,Download food diary app,0,flexible_pair
+go on a diet,Download food diary app,Prepare a healthy meal,0,flexible_pair
+go to class today,Pack school supplies into backpack,Get showered and dressed,0,flexible_pair
+go to class today,Get showered and dressed,Pack school supplies into backpack,0,flexible_pair
+go to nursery school graduation,Prepare a gift for the graduate,Dress up for event,1,annotation_green
+go to nursery school graduation,Dress up for event,Prepare a gift for the graduate,0,reverse_of_positive
+go to nursery school graduation,Prepare a gift for the graduate,Get directions to venue,0,flexible_pair
+go to nursery school graduation,Get directions to venue,Prepare a gift for the graduate,0,flexible_pair
+go to nursery school graduation,Drive to graduation venue,Prepare a gift for the graduate,0,flexible_pair
+go to nursery school graduation,Prepare a gift for the graduate,Drive to graduation venue,0,flexible_pair
+go to the bathroom,stand up from seat,ask to be excused,0,reverse_of_positive
+go to the bathroom,walk towards restroom,stand up from seat,0,reverse_of_positive
+go to the school dance,learn how to dance,pick up date,1,annotation_green
+go to the school dance,pick up date,learn how to dance,0,reverse_of_positive
+go to the school dance,learn how to dance,go shopping to buy something to wear,0,flexible_pair
+go to the school dance,go shopping to buy something to wear,learn how to dance,0,flexible_pair
+improve their test scores,study for the test.,go from the house to the school,1,annotation_green
+improve their test scores,go from the house to the school,study for the test.,0,reverse_of_positive
+improve their test scores,study for the test.,Retake the test,0,flexible_pair
+improve their test scores,Retake the test,study for the test.,0,flexible_pair
+meet an eagle,get in the car,drive to the zoo,1,annotation_green
+meet an eagle,drive to the zoo,get in the car,0,reverse_of_positive
+start their own business,create an LLC,come up with a business plan,1,annotation_green
+start their own business,come up with a business plan,create an LLC,0,reverse_of_positive
+travel to Europe,do research about European destinations,apply for a passport at the post office,0,reverse_of_positive
+travel to Europe,prepare for departure date,pack bags and other necessary items,0,flexible_pair
+travel to Europe,pack bags and other necessary items,prepare for departure date,0,flexible_pair

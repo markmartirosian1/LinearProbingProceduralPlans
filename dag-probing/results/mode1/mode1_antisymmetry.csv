@@ -1,0 +1,42 @@
+goal,a,b,score_ab,score_ba,score_sum,score_delta,y_true
+attend a jazz performance,Find a local jazz club,Get ready and dressed for a night of jazz,0.643,0.08415596501580697,0.727155965015807,0.558844034984193,1
+buy a new bicycle,Look at the bicycles that are offered.,Look and see what bicycle is the best.,0.7843,0.03190453650164335,0.8162045365016434,0.7523954634983566,1
+buy postage stamps,look over the order to make sure everything's correct,go to check out and enter payment details,0.837,0.7147178916551998,1.5517178916552,0.12228210834480013,1
+do something different,see which plans are interesting,write down those things,0.7316,0.4241910795424502,1.1557910795424502,0.3074089204575498,1
+earn some extra income,Look at classified ads,Find ads that fits skill set,0.8647,0.1323288762404394,0.9970288762404395,0.7323711237595606,1
+explore the city,Grab a map from the kiosk for a venue.,Have lunch at a restaurant.,0.7909,0.17191675573196263,0.9628167557319627,0.6189832442680374,1
+go to nursery school graduation,Prepare a gift for the graduate,Dress up for event,0.0528,0.05630950193689277,0.10910950193689277,0.00350950193689277,1
+go to the school dance,learn how to dance,pick up date,0.2886,0.6039464830771377,0.8925464830771377,0.3153464830771377,1
+improve their test scores,study for the test.,go from the house to the school,0.286,0.5035828986821581,0.789582898682158,0.21758289868215813,1
+meet an eagle,get in the car,drive to the zoo,0.8475,0.42100626196959284,1.2685062619695928,0.4264937380304072,1
+start their own business,create an LLC,come up with a business plan,0.3196,0.9541427419020375,1.2737427419020375,0.6345427419020375,1
+attend a jazz performance,Get ready and dressed for a night of jazz,Find a local jazz club,0.0842,0.6430045631693827,0.7272045631693826,0.5588045631693828,0
+attend a jazz performance,Get directions to the club,Get ready and dressed for a night of jazz,0.3895,0.1432147894571857,0.5327147894571858,0.24628521054281433,0
+attend a jazz performance,Get ready and dressed for a night of jazz,Get directions to the club,0.1432,0.3894563513067177,0.5326563513067177,0.2462563513067177,0
+buy a new bicycle,Look and see what bicycle is the best.,Look at the bicycles that are offered.,0.0319,0.784324117960698,0.816224117960698,0.752424117960698,0
+buy postage stamps,go to check out and enter payment details,look over the order to make sure everything's correct,0.7147,0.8369819933035859,1.551681993303586,0.12228199330358591,0
+do something different,write down those things,see which plans are interesting,0.4242,0.7315992286557227,1.1557992286557228,0.30739922865572267,0
+earn some extra income,Find ads that fits skill set,Look at classified ads,0.1323,0.8646544374018641,0.9969544374018641,0.7323544374018641,0
+explore the city,Have lunch at a restaurant.,Grab a map from the kiosk for a venue.,0.1719,0.7909292035709626,0.9628292035709627,0.6190292035709626,0
+go on a diet,Prepare a healthy meal,Download food diary app,0.1227,0.7026382367553375,0.8253382367553376,0.5799382367553375,0
+go on a diet,Download food diary app,Prepare a healthy meal,0.7026,0.12273311633574571,0.8253331163357457,0.5798668836642543,0
+go to class today,Pack school supplies into backpack,Get showered and dressed,0.3297,0.6026418319848471,0.9323418319848471,0.2729418319848471,0
+go to class today,Get showered and dressed,Pack school supplies into backpack,0.6026,0.3296687782289272,0.9322687782289272,0.2729312217710728,0
+go to nursery school graduation,Dress up for event,Prepare a gift for the graduate,0.0563,0.05284885142231289,0.1091488514223129,0.0034511485776871145,0
+go to nursery school graduation,Prepare a gift for the graduate,Get directions to venue,0.0808,0.24044559596562404,0.321245595965624,0.15964559596562405,0
+go to nursery school graduation,Get directions to venue,Prepare a gift for the graduate,0.2404,0.08075591858237031,0.3211559185823703,0.1596440814176297,0
+go to nursery school graduation,Drive to graduation venue,Prepare a gift for the graduate,0.1255,0.2648629888722786,0.3903629888722786,0.1393629888722786,0
+go to nursery school graduation,Prepare a gift for the graduate,Drive to graduation venue,0.2649,0.12550371338266256,0.39040371338266255,0.13939628661733747,0
+go to the bathroom,stand up from seat,ask to be excused,0.5666,0.7675985933904353,1.3341985933904352,0.20099859339043535,0
+go to the bathroom,walk towards restroom,stand up from seat,0.1455,0.9779007524109252,1.1234007524109253,0.8324007524109253,0
+go to the school dance,pick up date,learn how to dance,0.6039,0.2886416409327552,0.8925416409327551,0.3152583590672448,0
+go to the school dance,learn how to dance,go shopping to buy something to wear,0.0474,0.3130624434941868,0.3604624434941868,0.26566244349418683,0
+go to the school dance,go shopping to buy something to wear,learn how to dance,0.3131,0.04742628736327581,0.3605262873632758,0.2656737126367242,0
+improve their test scores,go from the house to the school,study for the test.,0.5036,0.2859945187832453,0.7895945187832454,0.21760548121675477,0
+improve their test scores,study for the test.,Retake the test,0.8772,0.05712010754990099,0.934320107549901,0.8200798924500989,0
+improve their test scores,Retake the test,study for the test.,0.0571,0.8771940155920849,0.9342940155920849,0.8200940155920848,0
+meet an eagle,drive to the zoo,get in the car,0.421,0.8474714258342867,1.2684714258342866,0.4264714258342867,0
+start their own business,come up with a business plan,create an LLC,0.9541,0.3196369448829354,1.2737369448829354,0.6344630551170645,0
+travel to Europe,do research about European destinations,apply for a passport at the post office,0.2707,0.047851913489281785,0.3185519134892818,0.22284808651071822,0
+travel to Europe,prepare for departure date,pack bags and other necessary items,0.5186,0.18973919165035033,0.7083391916503503,0.3288608083496496,0
+travel to Europe,pack bags and other necessary items,prepare for departure date,0.1897,0.5185847982894695,0.7082847982894694,0.3288847982894695,0
