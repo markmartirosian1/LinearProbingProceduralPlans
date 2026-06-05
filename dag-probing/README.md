@@ -49,7 +49,7 @@ The project investigates whether procedural ordering knowledge is linearly encod
 │   │   ├── combined_m1_probe.csv         # Combined experiment — Mode 1 probe
 │   │   ├── combined_m1_llm.csv           # Combined experiment — Mode 1 LLM baseline
 │   │   ├── combined_m2_probe.csv         # Combined experiment — Mode 2 probe
-│   │   └── combined_m2_llm.csv          # Combined experiment — Mode 2 LLM inverted
+│   │   └── combined_m2_llm.csv          # Combined experiment — Mode 2 LLM low-confidence
 │   └── permutation/
 │       ├── permutation_aucs_mode2.csv    # 100 shuffled-label CV AUCs — Probe 2
 │       ├── permutation_aucs_mode1_tp1.csv
@@ -129,7 +129,7 @@ Best F1 = **0.667** (tp1_ordering, t=0.60) · TP=7, FP=3, FN=4
 | | 2a same-depth (n=2) | 2b cross-branch (n=2) |
 |---|---|---|
 | Probe 2 F1 | 0.774 | 0.839 |
-| LLM inverted F1 | 0.583 | 0.519 |
+| LLM low-confidence F1 | 0.583 | 0.519 |
 
 ---
 
