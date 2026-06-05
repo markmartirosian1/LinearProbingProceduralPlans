@@ -57,6 +57,9 @@ Tests both probe modes across a range of corruption levels on single-ordering an
 
 ## Data files
 
+**Data splits — Groups A, B, and C**
+The 622 ProScript plans are divided into three non-overlapping groups. Group B is the probe training split: all confirmed, reversed, and flexible edge examples in proscript_train_edges_v2.csv and v3.csv come from Group B plans. Group C is the evaluation split: the 91 plans in proscript_pipeline_eval_final.csv are all Group C plans, and this is the only population used for Mode 1 and Mode 2 pipeline evaluation, the annotation-based test set, and the enrichment scaling experiment. Group A is a held-out split not used in any notebook in this repository. The split ensures that no plan used to train a probe ever appears in evaluation — all leakage checks in the notebooks assert this explicitly. CaptainCook4D plans are entirely separate from the ProScript split and were never seen during training, making CaptainCook evaluation a zero-shot transfer test.
+
 ### `proscript_train_edges_v2.csv`
 **Probe training data — Group B, three-class, 2,154 rows**
 
@@ -140,23 +143,3 @@ Used exclusively for zero-shot transfer evaluation — no CaptainCook data appea
 14 of 21 plans are enrichable. GT edges were derived from the official CaptainCook4D ground-truth task graphs (`edges_completed` field in the dataset JSON).
 
 ---
-
-### `proScript_data-20260226T065943Z-1-001.zip`
-**ProScript plan JSON files — 622 plans**
-
-Contains 622 JSON files, one per ProScript procedural plan. Each file is named `<goal_with_underscores>.json`.
-
-Each JSON has two top-level keys:
-
-```json
-{
-  "steps": {"0": "START", "1": "take peanut butter out of the pantry", ..., "N": "END"},
-  "edges": [[0, 1], [1, 2], ...]
-}
-```
-
-`steps` maps integer IDs (as strings) to step labels. `START` (ID 0) and `END` (last ID) are sentinel nodes excluded during parsing. `edges` is a list of `[from_id, to_id]` integer pairs representing the directed ordering constraints.
-
-All three notebooks extract this ZIP on startup and parse plan structures using `parse_plan_json()`. Required for: computing incomparable pairs, topological depths, identifying hard edges, and generating spurious edge candidates.
-
-**Note:** This file is large and should not be re-distributed. The original dataset is available from the [ProScript repository](https://github.com/collinskatie/proscript).
