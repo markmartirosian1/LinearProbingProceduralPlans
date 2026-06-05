@@ -1,4 +1,3 @@
-# Senior Researcher Diagnostic Guide
 ## Complete Results Summary: Mode 1 & Mode 2
 
 ---
