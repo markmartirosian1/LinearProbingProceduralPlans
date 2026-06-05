@@ -64,7 +64,7 @@ The project investigates whether procedural ordering knowledge is linearly encod
 │
 ├── docs/
 │   └── researcher_guide.md              # Diagnostic guide: all results, validity analysis, next steps
-│
+│   └── FILES_README.md                  # A guide on every single notebook and data file. 
 ├── .gitignore
 └── README.md
 ```
