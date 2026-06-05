@@ -61,8 +61,6 @@ Synthetic val      → F1 = 0.869   (same controlled setup, more data — easies
 
 The performance gradient across these three contexts is exactly what you want to see. The annotation test is hardest because: (a) genuinely ambiguous human-missed dependencies, (b) small positive count (11), (c) the 4 persistent false negatives suggest the probe correctly flags uncertainty on borderline cases rather than forcing a decision. The scaling results sit between the two because the deletion test uses the same type of removed hard edges as synthetic validation, but a more realistic mix of plan types.
 
-**The ~20pp gap between annotation (0.667) and synthetic (0.869)** is itself a reportable finding: it quantifies the cost of real-world annotator ambiguity. The probe is more reliable on definitively required edges than on edges that a trained annotator missed.
-
 ---
 
 ## Mode 2 — Complete picture
