@@ -26,7 +26,7 @@ Reports three F1 metrics per configuration: `macro_f1` (all plans), `enrichable_
 
 Three experiments in one notebook:
 
-**Mode 1 test set** — parses `DAGAnnotationFinal.xlsx` (not in this package) using GraphViz DOT diffs to extract ground-truth positives (green edges = missing ordering constraints). Builds a 22-pair balanced test set (11 positives + 17 negatives) from the 15 MULTI plans and evaluates Probe 1 across threshold sweep. Also builds a synthetic validation set from Group C single-ordering plans (hard edges removed = synthetic positives).
+**Mode 1 test set** — parses `DAGAnnotationFinal.xlsx` (not in this package) using GraphViz DOT diffs to extract ground-truth positives (green edges = missing ordering constraints). Builds a 22-pair balanced test set (11 positives + 11 negatives) from the 15 MULTI plans and evaluates Probe 1 across threshold sweep. The full test set contains 41 pairs (11 positives + 30 negatives). Also builds a synthetic validation set from Group C single-ordering plans (hard edges removed = synthetic positives).
 
 **Mode 1 permutation test** — reuses the Probe 1 training hidden states (already extracted) and runs 100 label-shuffled CV trials to confirm the probe is learning genuine signal, not overfitting to training set statistics.
 
