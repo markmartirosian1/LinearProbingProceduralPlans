@@ -1,7 +1,7 @@
 # Probing Procedural Knowledge in LLM Hidden States
 ### DAG Enrichment via Mistral-7B Linear Probes
 
-Research code for *"LLMs Know More Than They Show"*-style probing applied to procedural temporal reasoning, targeting [LM4Plan @ ICAPS 2026](https://icaps26.icaps-conference.org/workshops/lm4plan/).
+Research code for *"LLMs Know More Than They Show"*-style probing applied to procedural temporal reasoning. 
 
 The project investigates whether procedural ordering knowledge is linearly encoded in Mistral-7B's hidden states at layers 16–18, using two tasks on ProScript and CaptainCook4D procedural DAGs:
 
