@@ -1,0 +1,8 @@
+{
+  "probe1_file": "probe1_layer16.pkl",
+  "probe1_layer": 16,
+  "probe2_file": "probe2_layer17.pkl",
+  "probe2_layer": 17,
+  "model_name": "mistralai/Mistral-7B-Instruct-v0.1",
+  "cache_sig": "7cacc74db2"
+}

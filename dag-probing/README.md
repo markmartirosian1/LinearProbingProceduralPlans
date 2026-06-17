@@ -1,157 +1,150 @@
-# Probing Procedural Knowledge in LLM Hidden States
-### DAG Enrichment via Mistral-7B Linear Probes
+# Probing Procedural Ordering Knowledge in LLM Hidden States
 
-Research code for *"LLMs Know More Than They Show"*-style probing applied to procedural temporal reasoning. 
+Linear probes trained on Mistral-7B hidden states can recover temporal ordering relationships between procedural steps — and they do so significantly better than the model's own output predictions.
 
-The project investigates whether procedural ordering knowledge is linearly encoded in Mistral-7B's hidden states at layers 16–18, using two tasks on ProScript and CaptainCook4D procedural DAGs:
+This repository contains the full experimental pipeline for two probe tasks on the [ProScript v1a](https://github.com/collinskatie/proscript) dataset of procedural plans:
 
-- **Mode 1 (enrichment):** given a partially-specified DAG, identify which incomparable step pairs should receive ordering edges
-- **Mode 2 (correction):** given an over-constrained DAG, identify which existing edges are spurious and should be removed
+- **Mode 1 (ordering direction recovery):** given a DAG with missing edges, identify which direction the ordering should go between steps that lost reachability
+- **Mode 2 (spurious edge detection):** given a DAG with inserted false edges, identify which edges don't belong
+
+---
+
+## Key results
+
+### Probes learn genuine signal (permutation tests)
+
+| Probe | Best layer | Real CV AUC | Permuted mean | p-value |
+|---|---|---|---|---|
+| Probe 1 (Mode 1) | 16 | 0.824 | 0.501 | < 0.01 |
+| Probe 2 (Mode 2) | 17 | 0.881 | 0.502 | < 0.01 |
+
+### Mode 1 — ordering direction recovery
+
+The probe identifies which step should come first among pairs that lost ordering due to edge deletion. Evaluated on 817 multi-ordering test plans.
+
+| Hard edges deleted | Probe F1 | LLM F1 | Probe TCA | LLM TCA |
+|---|---|---|---|---|
+| 20% | **0.861** | 0.658 | **0.812** | 0.337 |
+| 40% | **0.854** | 0.658 | **0.741** | 0.295 |
+| 60% | **0.848** | 0.659 | **0.705** | 0.292 |
+
+### Mode 2 — spurious edge detection
+
+The probe identifies inserted false edges. Two spurious-edge types tested: same-depth parallel (M2a, in-distribution for probe training) and cross-branch (M2b, out-of-distribution).
+
+| Condition | Probe F1 | LLM F1 | Probe TCA | LLM TCA |
+|---|---|---|---|---|
+| M2a n=2 | **0.511** | 0.282 | **0.861** | 0.773 |
+| M2b n=2 | **0.470** | 0.310 | **0.845** | 0.770 |
+
+---
+
+## Quick start
+
+### 1. Clone and install dependencies
+
+```bash
+git clone https://github.com/markmartirosian1/LinearProbingProceduralPlans.git
+pip install transformers accelerate scikit-learn tqdm matplotlib
+```
+
+### 2. Download ProScript v1a
+
+The ProScript dataset is not included due to redistribution constraints. Download from the [ProScript repository](https://github.com/collinskatie/proscript) and place the JSONL files at:
+
+```
+/content/train.jsonl
+/content/dev.jsonl
+/content/test.jsonl
+```
+
+The dataset contains 6,096 procedural plans: 3,099 training, 1,031 development, 1,966 test. The test set includes plans from ROCStories, DeScript, and VirtualHome.
+
+### 3. Run notebooks in order
+
+Both notebooks are designed for Google Colab with GPU (A100 recommended).
+
+| Notebook | Runtime (A100) | What it does |
+|---|---|---|
+| `01_probe_training_and_permutation.ipynb` | ~3 hours | Layer sweep, probe training, permutation tests |
+| `02_enrichment_scaling.ipynb` | ~2 hours | Dev threshold selection, test evaluation, scaling curves |
+
+Notebook 2 requires the probe PKLs and manifest saved by Notebook 1.
+
+---
+
+## Methodology
+
+### Probe architecture
+
+Both probes are `StandardScaler → LogisticRegression(C=1.0, class_weight='balanced')` pipelines fitted on Mistral-7B-Instruct-v0.1 hidden states. The prompt asks: *"Must Action A happen before Action B? Answer yes or no."*
+
+Layer selection uses held-out dev features (fit on train, evaluate on dev AUC). Probe 1 selected layer 16; Probe 2 selected layer 17 — consistent with the 15–18 consensus zone observed across multiple prior experiments.
+
+### Training data
+
+**Probe 1:** confirmed edges (y=1) vs reversed edges + incomparable pairs from multi-ordering plans (y=0). Balanced to ~40k rows.
+
+**Probe 2:** confirmed edges (y=1) vs same-depth incomparable pairs (y=0). Balanced to ~6.5k rows.
+
+All training uses the official ProScript v1a training split. Dev and test plan names are excluded from training via an explicit leakage guard.
+
+### Evaluation design
+
+**Threshold locking:** thresholds are selected on the dev set at a single reference severity (40% deletion for Mode 1, n=2 for Mode 2) and held fixed across all test conditions. Scaling curves reflect genuine robustness, not threshold retuning.
+
+**Mode 1 — direction-labeled candidates:** when edges are deleted from a DAG, multiple step pairs lose reachability (not just the directly deleted pair). For each newly-incomparable directed pair (a, b):
+- y=1 if a could reach b in the original DAG (correct ordering direction)
+- y=0 if b could reach a instead (reversed direction)
+
+This gives ~50% positive rate and tests what the probe actually learns: temporal direction. Both probe and LLM baseline are evaluated on identical candidate pairs with identical labels.
+
+**Mode 2a/2b:** spurious edges are drawn from incomparable pairs in multi-ordering plans. Mode 2a uses same-depth pairs (in-distribution for Probe 2's training). Mode 2b uses cross-branch pairs at different depths (out-of-distribution — tests generalization).
+
+### Metrics
+
+- **Edge F1** — precision/recall on individual pair predictions. Primary metric for Mode 1 and Mode 2.
+- **TCA (transitive closure agreement)** — fraction of all step-pair reachability relationships that agree between the repaired and original DAGs. Captures ordering preservation even when the probe adds non-minimal direct edges.
+- **PRR (perfect reconstruction rate)** — fraction of plans with exact edge-set recovery. Very strict; near zero for Mode 1 because the probe adds correct-direction transitive shortcuts.
+- **GEDR (graph edit distance reduction)** — measures whether the repair moves the DAG closer to or further from the original. Negative when the probe adds correct-but-redundant edges, which is expected behavior for a probe that learns reachability rather than minimal graph structure.
+
+**Which metrics to prioritize:** F1 and TCA. F1 measures discrimination quality; TCA measures practical ordering preservation. GEDR and PRR are reported for completeness but penalize correct-direction transitive edges, which is a property of the evaluation metric rather than a probe failure.
 
 ---
 
 ## Repository structure
 
 ```
-.
+dag-probing/
 ├── notebooks/
-│   ├── 02_mode2_probe2_v2.ipynb       # Full 4-system sweep: Sys1–4 × all prompts × PS + CC
-│   │                                  # Binary Probe 2 + LLM baselines (primary Mode 2 eval)
-│   ├── 03_validation_notebook.ipynb   # Probe training, Mode 1 test set, permutation tests
-│   └── 04_enrichment_scaling.ipynb    # Deletion sweep + spurious insertion scaling experiment
-│
-├── data/
-│   ├── train/
-│   │   ├── proscript_train_edges_v2.csv  # Group B: confirmed (label=1) + reversed (label=0) edges
-│   │   └── proscript_train_edges_v3.csv  # Group B: truly_parallel edge type (multi-ordering plans)
-│   ├── eval/
-│   │   ├── proscript_pipeline_eval_final.csv   # Group C: dag_edges, GT new/removed edges
-│   │   └── captaincook_pipeline_eval.csv       # CaptainCook zero-shot eval
-│   └── annotation/
-│       └── DAGAnnotationFinal.xlsx       # 46 hand-annotated plans: 15 MULTI + 31 SINGLE
-│                                         # Column G = input DOT, Column I = ground-truth DOT
-│
+│   ├── 01_probe_training_and_permutation.ipynb
+│   └── 02_enrichment_scaling.ipynb
 ├── results/
-│   ├── mode1/
-│   │   ├── mode1_test_set.csv            # 11 positive + 30 negative pairs (annotation DOT diff)
-│   │   ├── mode1_test_results.csv        # Threshold sweep — annotation test set
-│   │   ├── mode1_synthetic_val.csv       # Threshold sweep — synthetic validation set
-│   │   ├── mode1_eval_diagnostics.csv    # Per-pair scores, pred_class, calibration
-│   │   ├── mode1_antisymmetry.csv        # Directional confidence analysis
-│   │   ├── mode1_balanced_sweep.csv      # Balanced threshold sweep
-│   │   ├── permutation_test_mode1.png    # Mode 1: tp1 + tp4 permutation panels
-│   │   └── probe1_calibration.png        # Reliability diagram + directional confidence
-│   ├── mode2/
-│   │   ├── mode2_probe2v2_sweep.csv      # Binary Probe 2: corpus/enrichable F1, LLM baselines
-│   │   └── permutation_test.png          # Mode 2 permutation test
-│   ├── enrichment/
-│   │   ├── enrichment_mode1.csv          # Mode 1 deletion sweep (20/40/60%)
-│   │   ├── enrichment_mode2.csv          # Mode 2a/2b spurious insertion (n=1/2/3)
-│   │   ├── combined_m1_probe.csv         # Combined experiment — Mode 1 probe
-│   │   ├── combined_m1_llm.csv           # Combined experiment — Mode 1 LLM baseline
-│   │   ├── combined_m2_probe.csv         # Combined experiment — Mode 2 probe
-│   │   ├── combined_m2_llm.csv           # Combined experiment — Mode 2 LLM low-confidence
-│   │   ├── mode1_scaling.png             # F1 vs deletion rate, precision/recall
-│   │   └── mode2_scaling.png             # Mode 2a/2b F1 vs spurious level
-│   └── permutation/
-│       ├── permutation_aucs_mode2.csv    # 100 shuffled-label CV AUCs — Probe 2
-│       ├── permutation_aucs_mode1_tp1_ordering.csv
-│       └── permutation_aucs_mode1_tp4_flexibility.csv
-│
+│   ├── probes/           probe PKLs + manifest
+│   ├── layer_sweep/      per-layer dev AUC CSVs + figure
+│   ├── permutation/      permuted AUC CSVs + figure
+│   └── enrichment/       test results CSV + locked thresholds + figure
+├── scripts/
+│   └── check_proscript_splits.py
 ├── docs/
-│   ├── results.md              # Diagnostic guide: all results, validity analysis, next steps
-│   └── FILES_README.md         # A guide on every single notebook and data file.
-│
+│   └── researcher_guide.md
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-## Quick start
-
-### 1. Get the data
-
-ProScript JSON files are required for all notebooks. Download from the [ProScript dataset repository](https://github.com/collinskatie/proscript) and extract to `/content/proScript_data/` (for Colab) or update `DATA_DIR` in each notebook config cell.
-
-CaptainCook4D task graphs are available from the [CaptainCook4D dataset](https://github.com/CaptainCook4D). The pipeline eval CSV (`data/eval/captaincook_pipeline_eval.csv`) is pre-processed and included here.
-
-### 2. Run notebooks in order
-
-All notebooks are designed for Google Colab with A100 GPU. Upload files to `/content/` before running.
-
-| Notebook | Uploads required | Saves |
-|---|---|---|
-| `02_mode2_probe2_v2.ipynb` | ZIP + v2 + v3 + PS eval + CC eval | `mode2_probe2v2_sweep.csv`, probe PKLs |
-| `02_mode2_probe2_v2.ipynb` | ZIP + v2 + v3 + PS eval + CC eval | `mode2_probe2v2_sweep.csv`, probe PKLs |
-| `03_validation_notebook.ipynb` | ZIP + v2 + v3 + PS eval + CC eval + `DAGAnnotationFinal.xlsx` | All `results/mode1/`, permutation CSVs, figures |
-| `04_enrichment_scaling.ipynb` | ZIP + v2 + v3 + PS eval (+ probe PKLs if `retrain=False`) | All `results/enrichment/`, figures |
-
-Notebooks 03 and 04 can load pre-trained probes from PKL files saved by 02 (`retrain=False` in config) to skip the ~2h training step.
-
-### 3. Dependencies
-
-```bash
-pip install transformers accelerate scikit-learn tqdm openpyxl matplotlib
-```
-
-Model: `mistralai/Mistral-7B-Instruct-v0.1` (loaded via HuggingFace in each notebook).
-
----
-
-## Key results
-
-### Mode 2 — Probe 2 vs. LLM baseline (annotation evaluation)
-
-| Dataset | Probe 2 corpus F1 | LLM direct F1 | Margin |
-|---|---|---|---|
-| ProScript | 0.404 | 0.217 | +0.187 (+86%) |
-| CaptainCook (zero-shot) | 0.549 | 0.397 | +0.152 (+38%) |
-
-### Mode 2 — Permutation test
-
-Real CV AUC = **0.902** · Permuted mean = 0.502 ± 0.028 · Max permuted = 0.560 · **p < 0.01** (0/100 runs ≥ real AUC) · Gap = 0.400
-
-### Mode 1 — Annotation test (11 positives, 15 MULTI plans)
-
-Best F1 = **0.667** (tp1_ordering, t=0.60) · TP=7, FP=3, FN=4
-
-### Enrichment scaling experiment
-
-| | 20% deletion | 40% deletion | 60% deletion |
-|---|---|---|---|
-| Probe 1 F1 | 0.795 | 0.752 | 0.737 |
-| LLM direct F1 | 0.673 | 0.665 | 0.673 |
-
-| | 2a same-depth (n=2) | 2b cross-branch (n=2) |
-|---|---|---|
-| Probe 2 F1 | 0.772 | 0.839 |
-| LLM low-confidence F1 | 0.583 | 0.519 |
-
----
-
-## Probe architecture
-
-- **Probe 1 (Mode 1):** binary logistic regression on Mistral-7B hidden states at layer 17. Training: `confirmed_keep` edges (label=1) vs. `incomparable_pairs` + `reversed` edges (label=0) from Group B plans. Applied to incomparable pairs at inference.
-- **Probe 2 (Mode 2):** binary logistic regression at layer 17. Training: `confirmed_keep` edges (label=1) vs. same-depth incomparable pairs (label=0, `synthetic_spurious_parallel`). Applied to existing DAG edges at inference.
-- Both trained with `class_weight='balanced'`, 5-fold plan-level `GroupKFold` CV.
-
----
-
 ## Data splits
 
-ProScript 622 plans are split into three groups:
-- **Group A:** held out
-- **Group B:** probe training (confirmed/reversed/flexible examples)
-- **Group C:** evaluation (`proscript_pipeline_eval_final.csv`, 91 plans)
+The ProScript v1a dataset (6,096 plans) uses official train/dev/test splits:
 
-`DAGAnnotationFinal.xlsx` covers 46 Group C plans with human-annotated ground-truth DAGs. Green edges in Column I = Mode 1 positives; dashed orange edges = Mode 2 positives.
+| Split | Plans | Multi-ordering | Role |
+|---|---|---|---|
+| Train | 3,099 | 1,001 (32.3%) | Probe training |
+| Dev | 1,031 | 361 (35.0%) | Layer selection + threshold locking |
+| Test | 1,966 | 817 (41.6%) | Final evaluation (reported results) |
 
----
-
-## Probe weights
-
-Pre-trained probe PKL files are not committed (regenerate via `03_validation_notebook.ipynb` or `02_mode2_probe2_v2.ipynb`). If you need them without retraining, open an issue.
+The test set's higher multi-ordering rate (41.6% vs 32.3%) reflects its inclusion of DeScript and VirtualHome plans alongside ROCStories, providing a genuine cross-domain generalization test.
 
 ---
 
@@ -159,15 +152,13 @@ Pre-trained probe PKL files are not committed (regenerate via `03_validation_not
 
 ```bibtex
 @inproceedings{,
-  title     = {Probing Procedural Knowledge in LLM Hidden States for DAG Enrichment},
+  title     = {Probing Procedural Ordering Knowledge in LLM Hidden States},
   author    = {},
   booktitle = {LM4Plan Workshop @ ICAPS 2026},
   year      = {2026}
 }
 ```
 
----
-
 ## Acknowledgements
 
-Extends [Orgad et al., ICLR 2025](https://arxiv.org/abs/2410.02707) — *"LLMs Know More Than They Show"* — to procedural temporal reasoning. ProScript dataset: [Singh et al., EMNLP 2022](https://aclanthology.org/2022.emnlp-main.701/). CaptainCook4D: [Peddi et al., 2023](https://arxiv.org/abs/2312.14556).
+Extends [Orgad et al., ICLR 2025](https://arxiv.org/abs/2410.02707) to procedural temporal reasoning. ProScript dataset: [Sakaguchi et al., 2021](https://arxiv.org/abs/2104.08251).
