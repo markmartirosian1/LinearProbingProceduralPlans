@@ -1,7 +1,0 @@
-mode,system,threshold
-M1,probe,0.4
-M1,llm,0.35
-M2a,probe,0.7
-M2a,llm,0.7
-M2b,probe,0.6
-M2b,llm,0.7
