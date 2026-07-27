@@ -2,174 +2,272 @@
 
 ## Overview
 
-This guide covers the full result set, explains what each finding means, identifies known limitations, and suggests next steps. All results use the official ProScript v1a train/dev/test splits with multi-ordering test plans only (817 plans, each with genuine incomparable step pairs).
+This guide covers the full result set from the two committed notebooks
+(`probe_training_and_permutation_v2.ipynb`, `probe_classification_v2.ipynb`),
+explains what each finding means, identifies known limitations, and suggests
+next steps. All numbers below are taken directly from the notebooks' saved
+execution outputs and the committed CSV/JSON/PKL artifacts, cross-checked
+against each other for consistency.
+
+**A note on scope:** an earlier version of this guide described a DAG-level
+repair evaluation (synthetic edge deletion at 20/40/60% severity, spurious
+edge insertion at n=1/2/3, and TCA/GEDR/PRR reconstruction metrics). That
+methodology does not exist in either notebook — there is no corruption code,
+no severity sweep, and no TCA/GEDR/PRR computation anywhere in this
+repository. This guide describes only what was actually run: a single
+dev-threshold-locked, pairwise classification evaluation on the unmodified
+test DAGs. If the DAG-repair evaluation is still a goal for the paper, it
+needs to be built — see "Recommended next steps."
 
 ---
 
 ## Permutation tests — the validity foundation
 
-Both probes show definitive signal at their selected layers.
+Both probes show signal well above chance at their selected layers.
 
-| Probe | Layer | Real CV AUC | Permuted mean ± std | p-value |
+| Probe | Layer | Real CV AUC | Permuted mean | p-value |
 |---|---|---|---|---|
-| Probe 1 (Mode 1) | 16 | 0.824 | 0.501 ± ~0.02 | < 0.01 |
-| Probe 2 (Mode 2) | 17 | 0.881 | 0.502 ± ~0.02 | < 0.01 |
+| Probe 1 (direction) | 16 | 0.836 | 0.499 | 0.032 |
+| Probe 2 (necessity) | 15 | 0.841 | 0.500 | 0.032 |
 
-The permutation test was run on a 5,000-row subsample of the training set for computational efficiency. The real AUC sits completely outside the permuted distribution in both cases — the signal is so strong that subsampling does not affect the conclusion.
+**Important — this is a different number from the layer-sweep dev AUC.**
+The permutation test's "real AUC" (0.836 / 0.841) is computed via **3-fold
+GroupKFold cross-validation on a subsample (≤5,000 rows) of the training
+set**. The layer-sweep AUC reported in the next section (0.900 / 0.855) is
+computed by **fitting on the full training set and scoring on the held-out
+dev set**. These measure related but distinct things — training-set CV
+generalization vs. train→dev transfer — and shouldn't be quoted
+interchangeably. (The previous version of this guide reported 0.824/0.881,
+which matches neither number and appears to be from an earlier or unrelated
+run.)
 
 **Methodological notes:**
 
-The test uses global label permutation with plan-level GroupKFold CV. Global permutation is a standard approximation; a strictly correct null would preserve within-plan label structure. The test confirms that hidden states carry genuine label-correlated signal at the selected layers.
-
-The test is run at the fixed layer selected on the development set. It does not test whether a significant layer exists across the sweep range (which would require a max-statistic permutation). It tests the narrower claim: "at this specific layer, the probe exploits real feature-label correspondence."
-
-The minimum reportable p-value with 100 permutations is ~0.01 (computed as (1 + count) / (n_perms + 1)). Both probes hit this floor.
+- **30 permutations, not 100.** `cfg['n_perms'] = 30` in the actual config,
+  confirmed by both `permutation_aucs_probe1.csv` and
+  `permutation_aucs_probe2.csv` each containing exactly 30 rows. The minimum
+  reportable p-value at 30 permutations is 1/31 ≈ 0.032 (computed as
+  `(1 + count) / (n_perms + 1)`), not <0.01. Both probes hit this floor: 0 of
+  30 permuted runs reached the real AUC.
+- The test uses **global label permutation** with plan-level GroupKFold CV
+  (3 folds). Global permutation is a standard approximation; a strictly
+  correct null would preserve within-plan label structure. The test confirms
+  hidden states carry genuine label-correlated signal at the selected
+  layers — it does not by itself validate the layer-sweep dev AUC or the
+  test-set F1 numbers reported elsewhere in this guide.
+- The test is run only at the fixed layer selected on the dev set. It does
+  not test whether a significant layer exists across the full sweep range
+  (which would require a max-statistic permutation test).
 
 ---
 
 ## Layer sweep — where ordering knowledge lives
 
-Probe 1 peaked at **layer 16** (dev AUC 0.899). Probe 2 peaked at **layer 17** (dev AUC 0.872). The one-layer difference between the two probes is consistent with prior experiments showing a 15–18 consensus zone, with slight task-dependent variation.
+Full sweep results (dev AUC, layers 15–18):
 
-Layer selection uses the full unbalanced dev set (15,342 rows for Probe 1, 7,954 for Probe 2) — AUC does not require balanced classes. Both micro (row-level) and macro (per-plan average) AUC are reported; layer selection uses micro AUC.
+| Layer | Probe 1 AUC | Probe 1 macro | Probe 2 AUC | Probe 2 macro |
+|---|---|---|---|---|
+| 15 | 0.8941 | 0.9086 | **0.8548** | **0.8567** |
+| 16 | **0.9000** | **0.9116** | 0.8541 | 0.8546 |
+| 17 | 0.8984 | 0.9111 | 0.8537 | 0.8456 |
+| 18 | 0.8973 | 0.9094 | 0.8513 | 0.8425 |
 
-**Training scale:**
+**Probe 1 selects layer 16** (probe AUC 0.9000, margin +0.3445 over the LLM
+baseline AUC of 0.5555). **Probe 2 selects layer 15** (probe AUC 0.8548,
+margin +0.2546 over LLM baseline AUC 0.6002) — layer 15 is the actual argmax;
+layer 17 is third-best. Both probes converge in the 15–16 range rather than
+the 15–18 range broadly — worth softening the "consensus zone" framing
+somewhat, since the AUC differences across layers 15–18 are small (≤0.6pp for
+Probe 1, ≤3.5pp for Probe 2) but layer 16→15 is a genuine, if modest,
+displacement from what was previously documented.
 
-| Probe | Training rows | Dev rows |
+**Training scale (from actual notebook output, not the previously documented
+numbers):**
+
+| Probe | Training rows (balanced) | Dev rows (all, layer-selection) |
 |---|---|---|
-| Probe 1 | 40,562 (balanced) | 15,342 (all) |
-| Probe 2 | 6,536 (balanced) | 7,954 (all) |
+| Probe 1 | 41,126 | 15,342 |
+| Probe 2 | 6,672 | 7,954 |
 
-The probe uses a `StandardScaler → LogisticRegression` pipeline. Convergence is checked after fitting; no convergence warnings were observed.
+(Previously documented as 40,562 / 6,536 — close but not exact; the current
+numbers are read directly from the executed cell output and the underlying
+CSVs, so they supersede the earlier figures.)
+
+The probe pipeline is `StandardScaler → LogisticRegression`. A convergence
+check runs after fitting each final probe; no convergence warnings appear in
+the saved output for either probe.
 
 ---
 
-## Mode 1 — ordering direction recovery
+## Held-out test-set evaluation
 
 ### What the task measures
 
-When edges are deleted from a DAG, multiple step pairs lose reachability — not just the directly deleted pair, but all pairs whose only path went through the deleted edge. The probe is asked: for each newly-incomparable directed pair (a, b), should a come before b?
+No synthetic corruption is applied. Both probes are evaluated directly on
+the original test DAGs, using dev-threshold-locked predictions, with the
+**same dedicated prompt each probe was trained on** (so scoring requires two
+separate forward passes per candidate pair — one per probe).
 
-The label is determined by the original DAG's reachability:
-- y=1 if a→...→b existed (adding a→b restores correct ordering)
-- y=0 if b→...→a existed (adding a→b reverses the ordering)
+**Probe 1:** y=1 if (a, b) is a real edge; y=0 if (a, b) is the reverse of a
+real edge or an incomparable pair. Evaluated on all 2,077 test plans (every
+plan contributes reversed-edge negatives, even single-ordering ones).
 
-This gives ~50% positive rate per plan, since each undirected pair contributes one correct and one reversed direction.
+**Probe 2:** y=1 (keep) if (a, b) is a real edge; y=0 (spurious) if (a, b) is
+a same-depth or cross-branch incomparable pair, in either direction.
+Evaluated only on the 817 multi-ordering test plans.
 
 ### Results
 
-| Hard edges deleted | Probe F1 | Probe precision | Probe recall | LLM F1 | Probe margin |
+**Probe 1** (31,680 test pairs, 43.8% positive; threshold 0.50 probe / 0.30
+LLM):
+
+| System | F1 | Precision | Recall | Specificity |
+|---|---|---|---|---|
+| Probe | **0.776** | 0.752 | 0.802 | **79.4%** |
+| LLM output | 0.606 | 0.437 | 0.984 | 1.5% |
+
+**Probe 2** (10,095 test pairs, 60.9% positive; threshold 0.35 probe / 0.30
+LLM):
+
+| Condition | System | F1 | Precision | Recall | Specificity |
 |---|---|---|---|---|---|
-| 20% | 0.861 | 0.841 | 0.882 | 0.658 | +0.203 |
-| 40% | 0.854 | 0.833 | 0.876 | 0.658 | +0.196 |
-| 60% | 0.848 | 0.827 | 0.870 | 0.659 | +0.189 |
+| Combined | Probe | **0.789** | 0.783 | 0.795 | **65.7%** |
+| Combined | LLM | 0.757 | 0.610 | 0.996 | 0.9% |
+| Same-depth (in-dist.) | Probe | **0.826** | 0.859 | 0.795 | **71.1%** |
+| Same-depth (in-dist.) | LLM | 0.816 | 0.691 | 0.996 | 1.1% |
+| Cross-branch (OOD) | Probe | 0.843 | 0.898 | 0.795 | **53.1%** |
+| Cross-branch (OOD) | LLM | **0.911** | 0.839 | 0.996 | 0.5% |
 
 **Key findings:**
 
-1. **F1 of 0.86 is strong.** The probe correctly identifies ordering direction on 85%+ of pairs where reachability was broken. Precision and recall are well balanced.
+1. **Probe 1 shows a clean, large margin** (+0.171 F1) driven mostly by
+   specificity: the probe correctly rejects 79.4% of reversed/incomparable
+   pairs, while the LLM baseline rejects only 1.5% — it is answering "yes"
+   to nearly every direction question regardless of correctness, consistent
+   with the yes-bias documented elsewhere in this project.
 
-2. **Extremely robust to corruption severity.** Only 1.3pp F1 drop from 20% to 60% deletion — a 3× increase in corruption causes negligible performance loss.
+2. **Probe 2's combined and same-depth margins are real but modest**
+   (+0.032 and +0.010 F1). The probe's specificity advantage is still large
+   (65.7% vs 0.9% combined) but recall is capped at 0.795 for both subtypes,
+   while the LLM's near-universal "yes" answers push its recall to 0.996 —
+   this recall gap is what compresses the F1 margin relative to Probe 1.
 
-3. **LLM baseline is flat at 0.66.** With 50% positive rate, the LLM's yes-bias (recall 0.97, precision 0.50) produces F1 near the chance ceiling. The probe's +0.20 margin is genuine ordering discrimination beyond what the model's output logits capture.
+3. **Cross-branch is the one condition where the LLM's F1 is higher**
+   (0.911 vs 0.843, margin **−0.067**). This is not evidence the LLM
+   generalizes better out-of-distribution — its specificity there is 0.5%,
+   the worst of any condition tested (only 6 of 1,182 cross-branch spurious
+   pairs correctly flagged). Because cross-branch has a large class
+   imbalance (6,147 positive edges vs. 1,182 negative pairs), a
+   near-blanket-"yes" system's F1 is dominated by its 0.996 recall on the
+   majority class, inflating F1 despite negligible actual discrimination.
+   The probe's specificity (53.1%) is markedly lower than on same-depth
+   pairs (71.1%) — a genuine generalization gap, since Probe 2 was trained
+   only on same-depth negatives — but it is still two orders of magnitude
+   better than the LLM's. **F1 alone is a misleading metric on this
+   condition; specificity/precision tell the more accurate story.**
 
-4. **TCA tells the reachability story.** Probe TCA = 0.81 at 20% deletion vs LLM TCA = 0.34. The probe preserves 2.4× more ordering relationships. TCA degrades to 0.70 at 60% deletion — still double the LLM's 0.29.
-
-### Why GEDR is negative and why it's expected
-
-GEDR compares exact edge sets. The probe correctly identifies that "buy a guitar should come before practice daily" — but the original DAG expressed this transitively (buy → learn chords → practice), not as a direct edge. The probe adds the direct edge, which is correct for ordering but creates a transitive shortcut absent from the original edge set. Every correct-but-redundant edge pushes GEDR negative.
-
-This is a property of the probe learning reachability (the right concept for ordering) rather than minimal DAG structure (a graph-theoretic property orthogonal to temporal knowledge). GEDR is reported for completeness but should not be interpreted as probe failure. TCA is the correct metric for ordering preservation.
-
-PRR is near zero for the same reason — exact edge-set match requires the probe to add only the specific deleted edges and no transitive shortcuts, which is a much harder task than knowing ordering direction.
-
----
-
-## Mode 2 — spurious edge detection
-
-### What the task measures
-
-Spurious edges are inserted into multi-ordering test plans from their incomparable pairs. The probe must distinguish real edges (keep) from spurious ones (remove). Two subconditions:
-
-- **Mode 2a (same-depth):** spurious edges between steps at the same topological depth. In-distribution for Probe 2's training (trained on same-depth incomparable pairs as the flexible class).
-- **Mode 2b (cross-branch):** spurious edges between steps at different depths in independent branches. Out-of-distribution for Probe 2 — tests generalization.
-
-### Results
-
-| Condition | Probe F1 | Probe prec | Probe rec | LLM F1 | Probe TCA | LLM TCA |
-|---|---|---|---|---|---|---|
-| M2a n=1 | 0.450 | 0.333 | 0.695 | 0.234 | 0.862 | 0.777 |
-| M2a n=2 | 0.511 | 0.400 | 0.709 | 0.282 | 0.861 | 0.773 |
-| M2a n=3 | 0.531 | 0.426 | 0.706 | 0.308 | 0.859 | 0.771 |
-| M2b n=1 | 0.353 | 0.264 | 0.530 | 0.220 | 0.858 | 0.788 |
-| M2b n=2 | 0.470 | 0.401 | 0.568 | 0.310 | 0.845 | 0.770 |
-| M2b n=3 | 0.500 | 0.440 | 0.580 | 0.326 | 0.842 | 0.767 |
-
-**Key findings:**
-
-1. **Probe beats LLM at every level.** Margin ranges from +60% to +90% relative improvement on F1.
-
-2. **Mode 2a > Mode 2b** as expected — same-depth spurious edges are in-distribution for the probe. But Mode 2b still shows strong performance, demonstrating genuine generalization beyond the training distribution.
-
-3. **Positive rate is low (12–21%)** — each plan has many real edges and few spurious insertions. The probe's recall (~70% for M2a, ~55% for M2b) with moderate precision reflects this imbalance.
-
-4. **GEDR is mildly negative** for Mode 2 (-0.7 to -0.3 for the probe) — the probe occasionally removes a real edge alongside the spurious ones. The LLM baseline's GEDR is much worse (-2.3 to -1.1).
-
-5. **M2b n=1 has only 253 eligible plans** — plans must have cross-branch incomparable pairs, which not all multi-ordering plans do. Use n≥2 as the primary claim.
-
----
-
-## Combined experiment
-
-40% edge deletion + 2 same-depth spurious edges on the same plans. Both probes run on one corrupted DAG.
-
-| System | PRR | GEDR | TCA |
-|---|---|---|---|
-| Probe | 0.000 | -1.564 | **0.690** |
-| LLM | 0.000 | -3.507 | **0.347** |
-
-The probe's TCA (0.69) is double the LLM's (0.35), confirming both probe tasks contribute meaningfully to DAG repair even in the hardest condition. Zero PRR is expected given the combined corruption. GEDR is negative for both systems but the probe is substantially less negative.
+4. **Recall is identical across subtypes within each system** (0.795 for the
+   probe, 0.996 for the LLM, in both same-depth and cross-branch rows). This
+   is expected: the positive-class (real-edge) predictions are unchanged
+   across the two evaluations — only the negative-pool composition differs
+   — so all the between-subtype variation in the table comes from precision
+   and specificity, not recall.
 
 ---
 
 ## Threshold selection
 
-Thresholds were locked from the dev set at reference severities, then held fixed across all test conditions:
+Locked from the dev set via best-F1 sweep over {0.30, 0.35, ..., 0.75}, held
+fixed for test evaluation:
 
-| Mode | Probe threshold | LLM threshold |
+| Probe | Probe threshold | LLM threshold |
 |---|---|---|
-| M1 | 0.40 | 0.35 |
-| M2a | 0.70 | 0.70 |
-| M2b | 0.60 | 0.70 |
+| Probe 1 | 0.50 | 0.30 |
+| Probe 2 (both subtypes) | 0.35 | 0.30 |
 
-The low Mode 1 probe threshold (0.40) reflects the balanced positive rate — the probe can afford moderate precision since false positives (correct direction but non-minimal edge) are less costly than false negatives (missing ordering). Mode 2 thresholds are higher because the cost of incorrectly removing a real edge is high.
+Probe 2 uses one combined threshold for both same-depth and cross-branch
+evaluation — there is no separate per-subtype threshold in the current
+pipeline.
 
 ---
 
 ## Known limitations
 
-**1. GEDR and PRR penalize correct ordering knowledge.** The probe adds transitive shortcuts because it learns reachability, not minimal graph structure. This is a metric limitation, not a probe failure. TCA is the appropriate metric for ordering preservation.
+**1. F1 is a misleading headline metric on the cross-branch condition.** As
+detailed above, the LLM's higher F1 there reflects extreme class imbalance
+and near-universal positive predictions, not genuine out-of-distribution
+generalization. Any paper claim about Probe 2's performance should report
+specificity or precision alongside F1, particularly for this cell, and
+should not claim "the probe beats the LLM in every condition" — it doesn't,
+on raw F1.
 
-**2. Mode 2b is out-of-distribution.** Probe 2 was trained on same-depth incomparable pairs only. Mode 2b tests cross-branch pairs at different depths — a deliberate OOD generalization experiment. The probe performs well but could be improved with broader training negatives.
+**2. The LLM baseline shows severe yes-bias across every condition tested**
+(specificity ranges 0.5%–1.5%). This makes the probe's margin over the LLM
+partly a story about the LLM's near-degenerate behavior rather than purely
+about the probe's competence. Both framings are defensible for the paper,
+but they support different claims and shouldn't be conflated.
 
-**3. Permutation test uses global label permutation.** Within-plan label correlation is not preserved under the null. A within-goal permutation scheme would be more rigorous but is technically complex and the current test is sufficient to establish signal existence.
+**3. Permutation test uses global label permutation.** Within-plan label
+correlation is not preserved under the null. A within-goal permutation
+scheme would be more rigorous but is technically complex; the current test
+is sufficient to establish signal existence, not to validate downstream
+test-set metrics.
 
-**4. Single corruption seed.** Each condition uses one random realization of which edges are deleted or inserted. With 817 test plans, variance across plans provides stability, but reporting confidence intervals across multiple seeds would strengthen the claims.
+**4. No variance estimates on test-set metrics.** Every F1/precision/recall
+number above is a single point estimate from one run on one fixed test set.
+The permutation test establishes that the *training-time* signal is real,
+but there are no bootstrap CIs or repeated-seed estimates for the *test-set*
+classification numbers reported in this section.
 
-**5. ProScript v1a count discrepancy.** The dataset contains 6,096 plans vs the paper's stated 6,414. Likely a post-publication quality filter in the v1a release.
+**5. Dataset split-count discrepancy.** `check_proscript_splits.py` reports
+3,099/1,031/1,966 plans (train/dev/test, total 6,096); the actual notebook
+run loaded 3,252/1,085/2,077 (total 6,414 — matching Sakaguchi et al.'s
+stated dataset size exactly). These are likely two different local copies of
+the ProScript v1a release. The multi-ordering subset counts (361 dev, 817
+test) are consistent with what both notebooks actually used, but the total
+counts should be reconciled before citing split sizes in the paper.
+
+**6. Two different dev sets are used for two different purposes.** Notebook
+1 builds a 7,954-row Probe 2 dev set for layer selection (from `build_rows`,
+applied across all dev plans); notebook 2 builds a separate 4,210-row Probe 2
+dev set for threshold locking (from `build_probe2_pairs`, restricted to
+plans with incomparable pairs). Both are legitimate for their respective
+purposes, but conflating them in write-ups would be inaccurate.
+
+**7. No DAG-level reconstruction evaluation exists yet.** All current
+metrics are pairwise (edge-level F1/precision/recall). There is no code that
+reconstructs a repaired DAG from probe predictions or measures
+transitive-closure agreement, graph edit distance, or perfect-reconstruction
+rate — despite this being described in earlier planning material. If this
+remains part of the paper's contribution, it needs to be built and run
+before it can be reported.
 
 ---
 
 ## Recommended next steps
 
 **For the paper:**
-- Lead with Mode 1 F1 = 0.86 and Mode 1 TCA margin (0.81 vs 0.34) as the headline
-- Report Mode 2 F1 margins (+60-90% over LLM) as secondary
-- Include permutation test figure as primary validity evidence
-- Include layer sweep figure showing the 15-18 peak zone
-- Acknowledge GEDR/PRR limitation in a discussion paragraph — frame as the probe learning reachability (useful concept) rather than minimal edge sets (graph-theoretic property)
+- Lead with Probe 1's F1 margin (+0.171) and specificity gap (79.4% vs 1.5%)
+  as the cleanest headline result.
+- Report Probe 2's combined and same-depth margins as secondary, positive
+  results, and report the cross-branch cell honestly (probe loses on F1,
+  wins substantially on specificity) with the class-imbalance explanation —
+  this is a more defensible and more interesting finding than omitting it.
+- Include the permutation test figure as validity evidence, with the
+  corrected 30-permutation, p=0.032 framing.
+- Include the layer sweep figure, and verify its annotation actually
+  highlights layer 15 for Probe 2 (not 17) before using it.
 
 **For strengthening results:**
-- Run multiple corruption seeds (3-5) and report mean ± std
-- Add CaptainCook4D as a zero-shot transfer evaluation if task graph JSONs are available
-- Consider training a broader Probe 2 with both same-depth and cross-depth negatives, which should improve Mode 2b
-- Explore whether the probe can be used iteratively — add the highest-confidence edge, recompute candidates, repeat — which would naturally produce more minimal edge sets and improve GEDR
+- Reconcile the two dataset-count sources (script vs. notebook) before
+  finalizing any split-size claims.
+- Add bootstrap or repeated-sample confidence intervals for the test-set F1
+  numbers.
+- If the DAG-repair/TCA/GEDR/PRR evaluation is still intended, build it as a
+  new notebook rather than continuing to describe it as already-completed
+  work.
+- Add CaptainCook4D as a zero-shot transfer evaluation if task graph JSONs
+  are available — not yet present in this repository.
+- Consider training a broader Probe 2 with both same-depth and cross-branch
+  negatives, which should directly address the specificity drop observed
+  out-of-distribution.
