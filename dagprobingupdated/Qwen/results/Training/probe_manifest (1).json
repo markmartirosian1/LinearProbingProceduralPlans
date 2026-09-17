@@ -1,0 +1,10 @@
+{
+  "probe1_file": "probe1_layer24.pkl",
+  "probe1_layer": 24,
+  "probe2_file": "probe2_layer27.pkl",
+  "probe2_layer": 27,
+  "model_name": "Qwen/Qwen3-8B",
+  "cache_sig": "e015977032",
+  "prompt_mode1": "tp1_direction",
+  "prompt_mode2": "tp2_necessity"
+}

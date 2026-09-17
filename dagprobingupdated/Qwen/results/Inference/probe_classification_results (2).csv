@@ -1,0 +1,9 @@
+probe,system,subtype,f1,precision,recall,tp,fp,fn,tn,threshold
+probe1,probe,all,0.7741,0.719,0.8385,11626,4544,2240,13270,0.4
+probe1,llm,all,0.38,0.443,0.3327,4613,5801,9253,12013,0.3
+probe2,probe,combined,0.8148,0.8004,0.8297,5100,1272,1047,2676,0.3
+probe2,llm,combined,0.7568,0.6089,0.9998,6146,3948,1,0,0.3
+probe2,probe,same_depth,0.8511,0.8736,0.8297,5100,738,1047,2028,0.3
+probe2,llm,same_depth,0.8163,0.6896,0.9998,6146,2766,1,0,0.3
+probe2,probe,cross_branch,0.8658,0.9052,0.8297,5100,534,1047,648,0.3
+probe2,llm,cross_branch,0.9122,0.8387,0.9998,6146,1182,1,0,0.3
